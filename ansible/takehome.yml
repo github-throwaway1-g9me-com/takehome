@@ -1,0 +1,35 @@
+---
+- name: Setup script for takehome
+  hosts: www
+  vars:
+    base_path: /opt/csg_security_agent
+    token: CSG_$h4p3#7e
+
+  tasks:
+  - name: Create destination dirs
+    ansible.builtin.file:
+      path: "{{ base_path }}"
+      state: directory
+      mode: '0755'
+  - name: Copy security agent script
+    ansible.builtin.copy:
+      src: files/security_agent_installer_linux_amd64_v1.0.0.sh
+      dest: "{{ base_path }}/security_agent_installer.sh"
+      owner: root
+      group: root
+      mode: u+rwx,g-wx,o-rwx
+  - name: Copy security agent script
+    ansible.builtin.copy:
+      src: files/security_agent_config.conf
+      dest: "{{ base_path }}/security_agent_config.conf"
+      owner: root
+      group: root
+      mode: u+r,g-rwx,o-rwx
+  - name: Replace variable with token
+    ansible.builtin.lineinfile:
+      path: /opt/csg_security_agent/security_agent_config.conf
+      regexp: '^unique_token:'
+      line: "unique_token: {{ token }}"
+  - name: Run security agent
+    ansible.builtin.command:
+      cmd: "/opt/csg_security_agent/security_agent_installer.sh --config /opt/csg_security_agent/security_agent_config.conf --token {{ token }}"
